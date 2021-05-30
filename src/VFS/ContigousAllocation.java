@@ -1,6 +1,7 @@
 package VFS;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -14,6 +15,7 @@ public class ContigousAllocation {
 	private	int sizeOfBlock;
 	private ArrayList<String> dataOfPath = new ArrayList<String>();
 	int counter = 0;
+	private ArrayList<Integer> emptyBlocks = new ArrayList<Integer>();
 	private ArrayList<Integer> keepIndexOfFolder = new ArrayList<Integer>();/** to help in removing folder **/ 
 	
 	public ContigousAllocation()
@@ -21,8 +23,9 @@ public class ContigousAllocation {
 		this.numOfBlocks = 0;
 		this.consumedBlocks = 0;
 		this.sizeOfBlock = 0;
-		
 	}
+	
+	
 	
 	public ContigousAllocation(int numOfBlocks, int sizeOfBlock) {
 		this.numOfBlocks = numOfBlocks;
@@ -69,9 +72,70 @@ public class ContigousAllocation {
 		{
 			DeleteFolder(restOfPath);
 		}
+		if(theCommand.equalsIgnoreCase("DisplayDiskStatus"))
+		{
+			System.out.print("Empty Blocks: ");
+			for(int i=0 ; i<this.numOfBlocks ; i++)
+			{
+				if(i >= this.emptyBlocks.size())
+				{
+					System.out.print(0);
+				}
+				else
+				{
+					System.out.print(this.emptyBlocks.get(i));
+				}
+			}
+			System.out.println();
+			this.counter = 0;
+			displayAllocatedBlocks(ContigousAllocation.rootDirectory);
+			
+		}
+		if(theCommand.equalsIgnoreCase("DisplayDiskStructure"))
+		{
+			this.counter = 0;
+			System.out.println("<root>");
+			for(int i=0 ; i<ContigousAllocation.rootDirectory.files.size() ; i++)
+			{
+				System.out.println("    <" + ContigousAllocation.rootDirectory.files.get(i).getFileName() + ">");
+			}
+			displayDiskStructure(ContigousAllocation.rootDirectory.subDirectories.get(0));
+		}
 	}
-
-	 
+	
+	private void displayDiskStructure(Directory dir)
+	{
+		System.out.println("   <" + dir.getDirName() + ">");
+		for(int i=0 ; i<dir.files.size() ; i++)
+		{
+			System.out.println("    <" + dir.files.get(i).getFileName() + ">");
+		}
+		for(int i=0 ; i<dir.subDirectories.size() ; i++)
+		{
+			displayDiskStructure(dir.subDirectories.get(i));
+		}
+		this.counter++;
+		if(this.counter >= ContigousAllocation.rootDirectory.subDirectories.size())
+			return;
+		else
+			displayDiskStructure(ContigousAllocation.rootDirectory.subDirectories.get(this.counter));
+	}
+	
+	
+	private void displayAllocatedBlocks(Directory dir)
+	{
+			for(int i=0 ; i<dir.files.size() ; i++)
+			{
+				System.out.println(dir.files.get(i).getFilePath() + "  " + 
+						dir.files.get(i).allocatedBlocks.get(0) + " " + dir.files.get(i).allocatedBlocks.get(1));
+			}
+			for(int i=0 ; i<dir.subDirectories.size() ; i++)
+			{
+				this.counter++;
+				displayAllocatedBlocks(dir.subDirectories.get(i));
+			}
+	}
+	
 	
 	private void CreateFile(String restOfPath)
 	 {
@@ -91,8 +155,7 @@ public class ContigousAllocation {
 		 for(int i=Size.length()-1 ; i>=0 ; i--)
 		 {
 			 temp += Size.charAt(i);
-		 }
-		 //System.out.println(temp);
+		 };
 		 int theSizeNeeded = Integer.parseInt(temp);
 		 
 		 String thePath = "";
@@ -106,11 +169,14 @@ public class ContigousAllocation {
 		 {
 			 File file = new File();
 			 file.setFilePath(thePath);
-			 //System.out.println(file.getFileName());
 			 ArrayList<Integer> allocate = new ArrayList<Integer>();
 			 allocate.add(this.consumedBlocks);
 			 allocate.add(this.consumedBlocks+numOfBlocksNeeded); 
 			 file.addAllocatedBlocks(allocate);
+			 for(int i=this.consumedBlocks ; i<(this.consumedBlocks+numOfBlocksNeeded) ; i++)
+			 {
+				 this.emptyBlocks.add(1);
+			 }
 			 this.consumedBlocks += numOfBlocksNeeded;
 			 
 			 
@@ -291,6 +357,7 @@ public class ContigousAllocation {
 					  for(int j=dir.files.get(i).allocatedBlocks.get(0) ; 
 							  j<dir.files.get(i).allocatedBlocks.get(1) ; j++)
 					  {
+						  this.emptyBlocks.set(j, 0);
 						  this.consumedBlocks--;
 					  }
 					  System.out.println("The file is deleted successfully....");
@@ -337,19 +404,12 @@ public class ContigousAllocation {
 		{
 			temp += this.dataOfPath.get(this.counter).charAt(i);
 		}
-		this.keepIndexOfFolder = new ArrayList<Integer>();
-		this.keepIndexOfFolder.add(0);
 		deleteFolderHelper(temp , ContigousAllocation.rootDirectory.subDirectories.get(0));
 	}
 	 
 	 private void deleteTheDirectoryItself(Directory dir , Directory root)
 	 {
-		if(this.counter >= root.subDirectories.size())
-		{
-			return;
-		}
-		else
-		{
+		 
 			 for(int i=0 ; i<root.subDirectories.size() ; i++)
 			 {
 				 if(dir.getDirName().equals(root.subDirectories.get(i).getDirName()))
@@ -357,14 +417,7 @@ public class ContigousAllocation {
 					 root.subDirectories.remove(i);
 					 return;
 				 }
-				 if(!dir.getDirName().equals(root.subDirectories.get(i).getDirName()) && 
-						 i == root.subDirectories.size()-1)
-				 {
-					 this.counter++;
-					 deleteTheDirectoryItself(dir , root.subDirectories.get(this.counter));
-				 }
 			 }
-		}
 	 }
 	 
 	 private void deleteFolderHelper(String path , Directory dir)
@@ -390,27 +443,21 @@ public class ContigousAllocation {
 	 
 	 private void deleteAllDataInFolder(int counting ,  Directory dir)
 	 {
-		 if(counting >= dir.subDirectories.size())//base case
-		 {
-			 
-			 dir.subDirectories.clear();
-			 System.out.println("The folder is deleted successfully....");
-		 }
-		 else
-		 {
 			 for(int i=0 ; i<dir.files.size() ; i++)/** delete all files in the folder **/
 			 {
 				 for(int j=dir.files.get(i).allocatedBlocks.get(0) ; 
 						 j<dir.files.get(i).allocatedBlocks.get(1) ; j++)
 				 {
+					 this.emptyBlocks.set(j, 0);
 					 this.consumedBlocks--;
 				 }
 				 dir.files.get(i).allocatedBlocks.clear();
 			 }
-			 dir.files.clear();
-			 counting++;
-			 deleteAllDataInFolder(counting , dir.subDirectories.get(counting));
-		 }
+			 for(int i=0 ; i<dir.subDirectories.size() ; i++)
+			 {
+				 deleteAllDataInFolder(counting , dir.subDirectories.get(i));
+			 }
+			
 	 }
 	 
 	 

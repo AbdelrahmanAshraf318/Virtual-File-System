@@ -7,7 +7,7 @@ public class Main {
 	public static void main(String[] args) {
 		
 		Scanner input = new Scanner(System.in);
-		ContigousAllocation contigous = new ContigousAllocation(100 , 20);
+		ContigousAllocation contigous = new ContigousAllocation(100 , 5);
 		
 		String command = "";
 		String cont = "";
