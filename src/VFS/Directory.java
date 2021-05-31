@@ -8,7 +8,7 @@ public class Directory {
 	
 	
 	private String directoryPath;
-	public ArrayList<File> files;
+	public ArrayList<File1> files;
 	public ArrayList<Directory> subDirectories;
 	private boolean deleted = false;
 	private ArrayList<Integer> allocatedBlocks;
@@ -22,7 +22,7 @@ public class Directory {
 	
 	public Directory() {
 		this.directoryPath = "";
-		this.files = new ArrayList<File>();
+		this.files = new ArrayList<File1>();
 		this.subDirectories = new ArrayList<Directory>();
 		this.deleted = false;
 		this.allocatedBlocks = new ArrayList<Integer>();

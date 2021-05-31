@@ -1,5 +1,7 @@
 package VFS;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -7,11 +9,12 @@ import java.util.LinkedList;
 
 public class LinkedAllocation {
 	
-static Directory rootDirectory = new Directory();
+	static Directory rootDirectory = new Directory();
 	
 	private	int numOfBlocks;
 	private	int consumedBlocks;
 	private	int sizeOfBlock;
+	private FileWriter file;
 	private ArrayList<String> dataOfPath = new ArrayList<String>();
 	int counter = 0;
 	private ArrayList<Integer> emptyBlocks = new ArrayList<Integer>();
@@ -26,7 +29,7 @@ static Directory rootDirectory = new Directory();
 	
 	
 	
-	public LinkedAllocation(int numOfBlocks, int sizeOfBlock) {
+	public LinkedAllocation(int numOfBlocks, int sizeOfBlock , String fileName) throws IOException {
 		this.numOfBlocks = numOfBlocks;
 		this.sizeOfBlock = sizeOfBlock;
 		this.consumedBlocks = 0;
@@ -34,6 +37,7 @@ static Directory rootDirectory = new Directory();
 		{
 			this.emptyBlocks.add(0);
 		}
+		this.file = new FileWriter(fileName);
 	}
 	
 	
@@ -130,7 +134,11 @@ static Directory rootDirectory = new Directory();
 	{
 			for(int i=0 ; i<dir.files.size() ; i++)
 			{
-				System.out.println(dir.files.get(i).getFilePath() + "  ");
+				System.out.print(dir.files.get(i).getFilePath() + "  ");
+				int lastIndex = dir.files.get(i).allocatedBlocks.size()-1;
+				int value = dir.files.get(i).allocatedBlocks.get(lastIndex);
+				System.out.println(dir.files.get(i).allocatedBlocks.get(0) + " " + value);
+				
 				for(int j=0 ; j<dir.files.get(i).allocatedBlocks.size() ; j=j+2)
 				{
 					System.out.println(dir.files.get(i).allocatedBlocks.get(j) + " " + 
@@ -175,7 +183,7 @@ static Directory rootDirectory = new Directory();
 		 int numOfBlocksNeeded = Math.round(theSizeNeeded / this.sizeOfBlock);
 		 if(numOfBlocksNeeded <= (this.numOfBlocks - this.consumedBlocks))
 		 {
-			 File file = new File();
+			 File1 file = new File1();
 			 file.setFilePath(thePath);
 			 ArrayList<Integer> allocate = new ArrayList<Integer>();
 			 
@@ -267,7 +275,7 @@ static Directory rootDirectory = new Directory();
 	
 	
 	
-	public void addFile(File file , String thePath)
+	public void addFile(File1 file , String thePath)
 	{
 		this.dataOfPath = new ArrayList<String>();
 		this.counter = 0;
@@ -287,7 +295,7 @@ static Directory rootDirectory = new Directory();
 		addFolderHelper(folder, this.dataOfPath.get(this.counter) , LinkedAllocation.rootDirectory);
 	}
 	
-	private void addFileHelper(File file , String path , Directory dir)
+	private void addFileHelper(File1 file , String path , Directory dir)
 	{
 		int isFound = path.indexOf(".txt");
 		if(isFound != -1)
@@ -507,6 +515,53 @@ static Directory rootDirectory = new Directory();
 	 }
 	 
 	 
+	 public void saveDataToFile() throws IOException
+	 {
+		 this.counter = 0;
+		 for(int i=0 ; i<LinkedAllocation.rootDirectory.files.size() ; i++)
+		 {
+			 this.file.write(LinkedAllocation.rootDirectory.files.get(i).getFilePath());
+			 for(int j=0 ; j<LinkedAllocation.rootDirectory.files.get(i).allocatedBlocks.size() ; j++)
+			 {
+				 this.file.write(LinkedAllocation.rootDirectory.files.get(i).allocatedBlocks.get(j));
+			 }
+		 }
+		 if(LinkedAllocation.rootDirectory.subDirectories.size() != 0)
+		 {
+			 writeOnFile(LinkedAllocation.rootDirectory.subDirectories.get(0));
+		 }
+		 this.file.close();
+	 }
 	 
+	 private void writeOnFile(Directory dir) throws IOException
+	 {
+		 if(this.counter >= dir.subDirectories.size())
+		 {
+			 return;
+		 }
+		 else
+		 {
+			 this.file.write(dir.getDirectoryPath());
+			 for(int i=0 ; i<dir.files.size() ; i++)
+			 {
+				 this.file.write(dir.files.get(i).getFilePath());
+				 for(int j=0 ; j<dir.files.get(i).allocatedBlocks.size() ; j++)
+				 {
+					 this.file.write(dir.files.get(i).allocatedBlocks.get(j));
+				 }
+			 }
+			 for(int i=0 ; i<dir.subDirectories.size() ; i++)
+			 {
+				 writeOnFile(dir.subDirectories.get(i));
+			 }
+			 this.counter++;
+			 if(this.counter >= dir.subDirectories.size())
+				 return;
+			 else
+			 {
+				 writeOnFile(ContigousAllocation.rootDirectory.subDirectories.get(this.counter));
+			 }
+		 }
+	 }
 
 }

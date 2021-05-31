@@ -2,21 +2,32 @@ package VFS;
 
 import java.util.ArrayList;
 
-public class File {
+public class File1 {
 	
 	private String filePath;
 	public ArrayList<Integer> allocatedBlocks; /** Will hold the indexes of the blocks  **/
 	private boolean deleted; /** To check if the file has been deleted or not  **/
 	public String fileName;
+	private int indexedFile;
 	
-	public File() {
+	public File1() {
 		this.filePath = "";
 		this.deleted = false;
 		this.fileName = "";
+		this.indexedFile = 0;
 	}
 	
+	public void setIndexFile(int indexedFile)
+	{
+		this.indexedFile = indexedFile;
+	}
 	
-	public File(String filePath) {
+	public int getIndexedFile()
+	{
+		return this.indexedFile;
+	}
+	
+	public File1(String filePath) {
 		this.filePath = filePath;
 		this.deleted = false;
 	}
