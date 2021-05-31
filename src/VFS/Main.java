@@ -8,6 +8,7 @@ public class Main {
 		
 		Scanner input = new Scanner(System.in);
 		ContigousAllocation contigous = new ContigousAllocation(100 , 5);
+		LinkedAllocation linked = new LinkedAllocation(100 , 5);
 		
 		String command = "";
 		String cont = "";
@@ -16,7 +17,7 @@ public class Main {
 			System.out.println("Enter Command: ");
 			command = input.nextLine();
 			
-			contigous.spitTheCommand(command);
+			linked.spitTheCommand(command);
 			
 			System.out.println("Do you want to continue?");
 			cont = input.nextLine();
