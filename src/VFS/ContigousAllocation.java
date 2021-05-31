@@ -19,11 +19,11 @@ public class ContigousAllocation {
 	private	int numOfBlocks;
 	private	int consumedBlocks;
 	private	int sizeOfBlock;
-	private BufferedWriter file;
 	private ArrayList<String> dataOfPath = new ArrayList<String>();
 	int counter = 0;
 	private ArrayList<Integer> emptyBlocks = new ArrayList<Integer>();
 	private ArrayList<Integer> keepIndexOfFolder = new ArrayList<Integer>();/** to help in removing folder **/ 
+	private int consumed = 0;
 	
 	public ContigousAllocation()
 	{
@@ -34,7 +34,7 @@ public class ContigousAllocation {
 	
 	
 	
-	public ContigousAllocation(int numOfBlocks, int sizeOfBlock , String fileName) throws IOException {
+	public ContigousAllocation(int numOfBlocks, int sizeOfBlock) {
 		this.numOfBlocks = numOfBlocks;
 		this.sizeOfBlock = sizeOfBlock;
 		this.consumedBlocks = 0;
@@ -42,7 +42,6 @@ public class ContigousAllocation {
 		{
 			this.emptyBlocks.add(0);
 		}
-		this.file = new BufferedWriter(new FileWriter(fileName, true));
 	}
 	
 	
@@ -68,12 +67,10 @@ public class ContigousAllocation {
 		}
 		if(theCommand.equalsIgnoreCase("CreateFile"))
 		{
-			System.out.println(restOfPath);
 			CreateFile(restOfPath); 
 		}
 		if(theCommand.equalsIgnoreCase("CreateFolder"))
 		{
-			System.out.println(restOfPath);
 			CreateFolder(restOfPath);
 		}
 		if(theCommand.equalsIgnoreCase("DeleteFile"))
@@ -86,6 +83,17 @@ public class ContigousAllocation {
 		}
 		if(theCommand.equalsIgnoreCase("DisplayDiskStatus"))
 		{
+			int numOfEmptyBlocks = 0;
+			int numOfAllocated = 0;
+			for(int i=0 ; i<this.emptyBlocks.size() ; i++)
+			{
+				if(this.emptyBlocks.get(i) == 0)
+					numOfEmptyBlocks++;
+				else
+					numOfAllocated++;
+			}
+			System.out.println("Num Of Empty blocks: " + numOfEmptyBlocks);
+			System.out.println("Num Of allocated blocks: " + numOfAllocated);
 			System.out.print("Empty Blocks: ");
 			for(int i=0 ; i<this.numOfBlocks ; i++)
 			{
@@ -179,55 +187,13 @@ public class ContigousAllocation {
 			 thePath += restOfPath.charAt(i);
 		 }
 		 
-		 int numOfBlocksNeeded = Math.round(theSizeNeeded / this.sizeOfBlock);
-		 if(numOfBlocksNeeded <= (this.numOfBlocks - this.consumedBlocks))
-		 {
-			 File1 file = new File1();
-			 file.setFilePath(thePath);
-			 ArrayList<Integer> allocate = new ArrayList<Integer>();
-			 
-			 int counter2 = 0;
-			 int index2 = 0;
-			 for(int i=0 ; i<this.consumedBlocks ; i++)
-			 {
-				 if(this.emptyBlocks.get(i) == 0)
-				 {
-					 if(counter2 == 0)
-					 {
-						 index2 = i;
-					 }
-					 counter2++;
-				 }
-			 }
-			 
-			 if(numOfBlocksNeeded == counter2)
-			 {
-				 for(int i = index2 ; i<(index2+counter2) ; i++)
-				 {
-					 this.emptyBlocks.set(i, 1);
-				 }
-				 allocate.add(index2);
-				 allocate.add(index2+numOfBlocksNeeded); 
-				 file.addAllocatedBlocks(allocate);
-			 }
-			 else
-			 {
-				 for(int i=this.consumedBlocks ; i<(this.consumedBlocks+numOfBlocksNeeded) ; i++)
-				 {
-					 this.emptyBlocks.set(i , 1);
-				 }
-				 allocate.add(this.consumedBlocks);
-				 allocate.add(this.consumedBlocks+numOfBlocksNeeded); 
-				 file.addAllocatedBlocks(allocate);
-			 }
-			 
-			 this.consumedBlocks += numOfBlocksNeeded;
-			 
+		 	File1 file = new File1();
+		 	
+		 	file.setFilePath(thePath);
+			 file.setFileSize(temp);
 			 
 			addFile(file , thePath);
-		 }
-		 else
-			 System.out.println("The fileSize is bigger than the available, please try again");
+		 
 		 
 	 }
 	
@@ -294,6 +260,72 @@ public class ContigousAllocation {
 					return;
 				}
 			}
+			
+			int value = Integer.parseInt(file.getFileSize());
+			
+			int numOfBlocksNeeded = Math.round(value / this.sizeOfBlock);
+			 if(numOfBlocksNeeded <= (this.numOfBlocks - this.consumed))
+			 {
+				 ArrayList<Integer> allocate = new ArrayList<Integer>();
+				 
+				 int counter2 = 0;
+				 int index2 = 0;
+				 for(int i=0 ; i<this.consumedBlocks ; i++)
+				 {
+					 if(this.emptyBlocks.get(i) == 0)
+					 {
+						 if(counter2 == 0)
+						 {
+							 index2 = i;
+						 }
+						 counter2++;
+					 }
+				 }
+				 
+				if(counter2 != 0)
+				{
+					for(int i = index2 ; i<(index2+counter2) ; i++)
+					 {
+						 this.emptyBlocks.set(i, 1);
+					 }
+					 allocate.add(index2);
+					 allocate.add(index2+counter2); 
+					 
+					 if(counter2 < numOfBlocksNeeded)
+					 {
+						 int calc = numOfBlocksNeeded - counter2;
+						 allocate.add(this.consumedBlocks);
+						 allocate.add(this.consumedBlocks+calc);
+						 for(int i = this.consumedBlocks ; i<(this.consumedBlocks+calc) ; i++)
+						 {
+							 this.emptyBlocks.set(i, 1);
+						 }
+					 }
+					 file.addAllocatedBlocks(allocate);
+				}
+				else
+				{
+					System.out.println(this.consumedBlocks);
+					allocate.add(this.consumedBlocks);
+					allocate.add(this.consumedBlocks+numOfBlocksNeeded);
+					for(int i = this.consumedBlocks ; i<(this.consumedBlocks+numOfBlocksNeeded) ; i++)
+					 {
+						this.emptyBlocks.set(i, 1);
+					 }
+					file.addAllocatedBlocks(allocate);
+				}
+				
+				 
+				 this.consumed += numOfBlocksNeeded;
+				 this.consumedBlocks = this.consumed;
+				 
+				 
+			 }
+			 else {
+				 System.out.println("The fileSize is bigger than the available, please try again");
+				 return;
+			 }
+				 
 			dir.files.add(file);
 			System.out.println("The file is created successfully.......");
 			return;
@@ -347,6 +379,7 @@ public class ContigousAllocation {
 				{
 					this.counter++;
 					addFolderHelper(folder , this.dataOfPath.get(this.counter) , dir.subDirectories.get(i));
+					return;
 				}
 				else if(!dir.subDirectories.get(i).getDirName().equals(path) && i == dir.subDirectories.size()-1)
 				{
@@ -402,7 +435,7 @@ public class ContigousAllocation {
 							  j<dir.files.get(i).allocatedBlocks.get(1) ; j++)
 					  {
 						  this.emptyBlocks.set(j, 0);
-						  this.consumedBlocks--;
+						  this.consumed--;
 					  }
 					  dir.files.remove(i);
 					  System.out.println("The file is deleted successfully....");
@@ -434,23 +467,19 @@ public class ContigousAllocation {
 	 private void deleteFolder(String path)
 	{
 		path += '&';
+		this.dataOfPath = new ArrayList<String>(); 
 		splitDataOfPath(path);
 		this.counter = 0;
-		this.counter = this.dataOfPath.size()-1;
-		String temp = "";
-		for(int i=0 ; i<this.dataOfPath.get(this.counter).length()-1 ; i++)
-		{
-			temp += this.dataOfPath.get(this.counter).charAt(i);
-		}
-		deleteFolderHelper(temp , ContigousAllocation.rootDirectory.subDirectories.get(0));
+		this.counter++;
+		deleteFolderHelper(this.dataOfPath.get(this.counter) , ContigousAllocation.rootDirectory);
 	}
 	 
-	 private void deleteTheDirectoryItself(Directory dir , Directory root)
+	 private void deleteTheDirectoryItself(String path , Directory root)
 	 {
 		 
 			 for(int i=0 ; i<root.subDirectories.size() ; i++)
 			 {
-				 if(dir.getDirName().equals(root.subDirectories.get(i).getDirName()))
+				 if(root.subDirectories.get(i).getDirName().equals(path))
 				 {
 					 root.subDirectories.remove(i);
 					 return;
@@ -460,26 +489,40 @@ public class ContigousAllocation {
 	 
 	 private void deleteFolderHelper(String path , Directory dir)
 	 {
-		 if(dir.getDirName().equals(path))//base case
-		 {
-			 deleteAllDataInFolder(0 , dir);
-			 this.counter = 0;
-			 deleteTheDirectoryItself(dir , ContigousAllocation.rootDirectory);
-			 return;
-		 }
-		
-		 else
-		 {
-			for(int i=0 ; i<dir.subDirectories.size() ; i++)
-			{
-				deleteFolderHelper(path , dir.subDirectories.get(i));
-			}
-			System.out.println("There is no folder with this path");
-			return;
-		 }
+		 int isFolder = path.indexOf("&");
+		  if(isFolder != -1)/** Reaches the end of the path **/
+		  {
+			  String temp = "";
+			  for(int i=0 ; i<path.length()-1 ; i++)
+				  temp += path.charAt(i);
+			  for(int i=0 ; i<dir.subDirectories.size() ; i++)
+			  {
+				  if(dir.subDirectories.get(i).getDirName().equals(temp))
+				  {
+					  deleteAllDataInFolder(dir.subDirectories.get(i));
+					  deleteTheDirectoryItself(temp , dir);
+					  System.out.println("The folder is deleted successfully....");
+					  return;
+				  }
+			  }
+			  System.out.println("You entered a wrong path of the file please try again");
+			  return;
+		  }
+		  if(isFolder == -1)/** it's a directory **/
+		  {
+			  for(int i=0 ; i<dir.subDirectories.size() ; i++)
+			  {
+				  this.counter++;
+				  if(this.counter >= this.dataOfPath.size())
+					  return;
+				  else
+					  deleteFolderHelper(this.dataOfPath.get(this.counter) , 
+							  dir.subDirectories.get(i));
+			  }
+		  }
 	 }
 	 
-	 private void deleteAllDataInFolder(int counting ,  Directory dir)
+	 private void deleteAllDataInFolder( Directory dir)
 	 {
 			 for(int i=0 ; i<dir.files.size() ; i++)/** delete all files in the folder **/
 			 {
@@ -487,13 +530,13 @@ public class ContigousAllocation {
 						 j<dir.files.get(i).allocatedBlocks.get(1) ; j++)
 				 {
 					 this.emptyBlocks.set(j, 0);
-					 this.consumedBlocks--;
+					 this.consumed--;
 				 }
 				 dir.files.get(i).allocatedBlocks.clear();
 			 }
 			 for(int i=0 ; i<dir.subDirectories.size() ; i++)
 			 {
-				 deleteAllDataInFolder(counting , dir.subDirectories.get(i));
+				 deleteAllDataInFolder(dir.subDirectories.get(i));
 			 }
 			
 	 }
@@ -519,41 +562,73 @@ public class ContigousAllocation {
 
 		}
 	 
-	 public void saveDataToFile() throws IOException
+	
+	 
+	 public void saveTheData() throws InterruptedException, IOException 
 	 {
-		 this.counter = 0;
-		 writeOnFile(ContigousAllocation.rootDirectory.subDirectories.get(0));
+			
+			 
+			 this.counter = 0;
+			 for(int i=0 ; i<ContigousAllocation.rootDirectory.files.size() ; i++)
+			{
+				 FileWriter file = new FileWriter("file.txt" , true);
+				 file.write(ContigousAllocation.rootDirectory.files.get(i).getFilePath() + 
+					 " "	+ ContigousAllocation.rootDirectory.files.get(i).getFileSize() + "\n");
+					file.close(); 
+					
+			}
+				if(ContigousAllocation.rootDirectory.subDirectories.size() != 0)
+				{
+					saveDataToFile(ContigousAllocation.rootDirectory.subDirectories.get(0));
+				}
+		 
 	 }
 	 
-	 private void writeOnFile(Directory dir) throws IOException
+	 private void saveDataToFile(Directory dir) throws InterruptedException, IOException 
 	 {
-		 if(this.counter >= dir.subDirectories.size())
-		 {
-			 return;
-		 }
-		 else
-		 {
-			 this.file.write(dir.getDirectoryPath());
-			 for(int i=0 ; i<dir.files.size() ; i++)
-			 {
-				 this.file.write(dir.files.get(i).getFilePath());
-				 for(int j=0 ; j<dir.files.get(i).allocatedBlocks.size() ; j++)
-				 {
-					 this.file.write(dir.files.get(i).allocatedBlocks.get(j));
-				 }
-			 }
-			 for(int i=0 ; i<dir.subDirectories.size() ; i++)
-			 {
-				 writeOnFile(dir.subDirectories.get(i));
-			 }
-			 this.counter++;
-			 if(this.counter >= dir.subDirectories.size())
-				 return;
-			 else
-			 {
-				 writeOnFile(ContigousAllocation.rootDirectory.subDirectories.get(this.counter));
-			 }
-		 }
+			 FileWriter file = new FileWriter("file.txt" , true);
+			 file.write(dir.getDirectoryPath() + "\n");
+			 file.close(); 
+				for(int i=0 ; i<dir.files.size() ; i++)
+				{
+					FileWriter file2 = new FileWriter("file.txt" , true);
+					file2.write(dir.files.get(i).getFilePath() + " " + dir.files.get(i).getFileSize() + 
+							"\n") ;
+					file2.close(); 
+				}
+				for(int i=0 ; i<dir.subDirectories.size() ; i++)
+				{
+					saveDataToFile(dir.subDirectories.get(i));
+				}
+				this.counter++;
+				if(this.counter >= ContigousAllocation.rootDirectory.subDirectories.size())
+					return;
+				else
+					saveDataToFile(ContigousAllocation.rootDirectory.subDirectories.get(this.counter)); 
+	 }
+	 
+	 public void restoreData()
+	 {
+		 File newFile = new File("file.txt"); 
+		 try {
+				Scanner scan = new Scanner(newFile);
+				int i = 0; 
+				while(scan.hasNextLine()) {
+					String temp = scan.nextLine();
+					int isFile = temp.indexOf(".txt");
+					if(isFile != -1)/** it's a file **/
+					{
+						CreateFile(temp);
+					}
+					else
+					{
+						CreateFolder(temp);
+					}
+				}
+			} catch (FileNotFoundException e) {
+				System.out.println("An error occured");
+				e.printStackTrace();
+			}
 	 }
 	 
 }

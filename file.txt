@@ -1,0 +1,7 @@
+root/file1.txt 40
+root/file1.txt 50
+root/file2.txt 60
+root/folder1
+root/folder1/folder2
+root/folder1/folder2/file.txt 40
+root/folder1/folder2/file2.txt 20

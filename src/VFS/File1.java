@@ -9,12 +9,23 @@ public class File1 {
 	private boolean deleted; /** To check if the file has been deleted or not  **/
 	public String fileName;
 	private int indexedFile;
+	private String fileSize; 
 	
 	public File1() {
 		this.filePath = "";
 		this.deleted = false;
 		this.fileName = "";
 		this.indexedFile = 0;
+		this.fileSize = "";
+	}
+	
+	public void setFileSize(String fileSize)
+	{
+		this.fileSize = fileSize;
+	}
+	public String getFileSize()
+	{
+		return this.fileSize;
 	}
 	
 	public void setIndexFile(int indexedFile)
